@@ -1,0 +1,18 @@
+<!doctype html>
+<html>
+<head>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div ng-app="widget" ng-controller="widgetController">
+	<div ng-repeat="value in test track by $index">
+		{{ test[$index] }}
+	</div>
+</div>
+
+
+
+<script src="js/angular.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
