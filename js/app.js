@@ -1,25 +1,27 @@
 var app = angular.module("widget",[]);
 
 
-app.controller("widgetController", ["$scope", "racerFactory", function($scope, racerFactory) {	
-	
-	var siol = racerFactory("http://192.168.1.2:3000/?a=www.siol.net");
-	siol.startRacing(1000); //pass in number of requests to complete the race
-	var telemach = racerFactory("http://192.168.1.2:3000?a=www.google.si");
-	telemach.startRacing(1000);
-	
-	setInterval(function(){
-		$scope.currentX = siol.totalTime+" ms";
-		$scope.currentR = siol.currentRequests;
-		var el = document.getElementById("time");
-		el.style.width = siol.totalTime/100+"px";
-		$scope.currentX2 = telemach.totalTime+" ms";
-		$scope.currentR2 = telemach.currentRequests;
-		var el = document.getElementById("time2");
-		el.style.width = telemach.totalTime/100+"px";
+app.controller("widgetController", ["$scope", "racerFactory","$http", function($scope, racerFactory, $http) {	
+	$scope.racers = [];
+	$scope.racerAddr = "www.google.com";
+	$scope.start = start;
+	$scope.add = add;
+	$scope.numRacers = $scope.racers.length; 
 
-	},1);
-
+	function add() {
+		var promise = $http.get("http://ip-api.com/json/"+$scope.racerAddr);
+		promise.then(function(response){
+			var racer = racerFactory("http://192.168.1.2:3000/?addr="+response.data.query);
+			racer.address = $scope.racerAddr;
+			$scope.racers.push(racer);
+			$scope.numRacers = $scope.racers.length;
+		});	
+	}
+	function start() {
+		for(var i = 0; i < $scope.racers.length; i++) {
+			$scope.racers[i].startRacing(100);
+		}
+	}
 }]);
 
 app.factory("responseTime", ["$http","$q", function($http, $q) {
@@ -46,11 +48,11 @@ app.factory("racerFactory", ["responseTime", function(responseTime){
 				if(racer.currentRequests < totalRequests) {
 					racer.currentRequests += 1;
 					racer.totalTime = racer.totalTime + response;
+					//document.getElementById("time").style.width = racer.totalTime/100+"px";
 					loop.apply(racer, [totalRequests]);
 				}
 			});
 		}
-
 		return {
 			totalTime : 0,
 			currentRequests: 0,

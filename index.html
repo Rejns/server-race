@@ -5,11 +5,17 @@
 </head>
 <body>
 <div ng-app="widget" ng-controller="widgetController">
-
-	<div><span>requests handled: </span> {{ currentR }} / 100 </div>
-	<div id="time" style="display:inline-block">&nbsp;</div><div style="display:inline-block">&nbsp;{{ currentX }}</div>
-	<div><span>requests handled: </span> {{ currentR2 }} / 100 </div>
-	<div id="time2" style="display:inline-block">&nbsp;</div><div style="display:inline-block">&nbsp;{{ currentX2 }}</div>
+	<input ng-model="racerAddr" style="color:red"/>
+	<button id="start" ng-click="start()">start</button>
+	<button id="add" ng-click="add()">add</button>
+	<div ng-model="numRacers"> Number of racers: {{ numRacers }} </div>
+	<div ng-repeat="racer in racers">
+		<div>{{ racer.address }}</div>
+		<div><span>requests handled:  {{ racer.currentRequests }} / 100 </div>
+		<div id="time" style="display:inline-block">&nbsp;</div><div style="display:inline-block">&nbsp;{{ racer.totalTime }}</div>
+	</div>
+<!--	<div><span>requests handled: </span> {{ currentR2 }} / 100 </div>
+	<div id="time2" style="display:inline-block">&nbsp;</div><div style="display:inline-block">&nbsp;{{ currentX2 }}</div> -->
 </div>
 
 
