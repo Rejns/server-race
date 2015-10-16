@@ -5,8 +5,11 @@
 </head>
 <body>
 <div ng-app="widget" ng-controller="widgetController">
-	<div id="time">{{ currentX }} </div>
-	<div id="time2">{{ currentX2 }} </div>
+
+	<div><span>requests handled: </span> {{ currentR }} / 100 </div>
+	<div id="time" style="display:inline-block">&nbsp;</div><div style="display:inline-block">&nbsp;{{ currentX }}</div>
+	<div><span>requests handled: </span> {{ currentR2 }} / 100 </div>
+	<div id="time2" style="display:inline-block">&nbsp;</div><div style="display:inline-block">&nbsp;{{ currentX2 }}</div>
 </div>
 
 

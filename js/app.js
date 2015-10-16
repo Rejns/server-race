@@ -3,16 +3,18 @@ var app = angular.module("widget",[]);
 
 app.controller("widgetController", ["$scope", "racerFactory", function($scope, racerFactory) {	
 	
-	var siol = racerFactory("http://localhost:3000");
-	siol.startRacing(100); //pass in number of requests to complete the race
-	var telemach = racerFactory("http://localhost:3000");
-	telemach.startRacing(100);
+	var siol = racerFactory("http://192.168.1.2:3000/?a=www.siol.net");
+	siol.startRacing(1000); //pass in number of requests to complete the race
+	var telemach = racerFactory("http://192.168.1.2:3000?a=www.google.si");
+	telemach.startRacing(1000);
 	
 	setInterval(function(){
-		$scope.currentX = siol.totalTime;
+		$scope.currentX = siol.totalTime+" ms";
+		$scope.currentR = siol.currentRequests;
 		var el = document.getElementById("time");
 		el.style.width = siol.totalTime/100+"px";
-		$scope.currentX2 = telemach.totalTime;
+		$scope.currentX2 = telemach.totalTime+" ms";
+		$scope.currentR2 = telemach.currentRequests;
 		var el = document.getElementById("time2");
 		el.style.width = telemach.totalTime/100+"px";
 
@@ -25,7 +27,7 @@ app.factory("responseTime", ["$http","$q", function($http, $q) {
 		return $q(function(resolve, reject) {
 			var now = Date.now();
 			var then = null;
-			var promise = $http.get(address, {withCredentials: true});
+			var promise = $http.get(address);
 			promise.then(function(response){
 				then = Date.now();
 				then = then - now;

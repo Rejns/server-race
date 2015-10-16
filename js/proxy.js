@@ -1,12 +1,22 @@
+var express = require('express');
+var app = require('express')();
 var http = require('http');
+var server = http.createServer(app);
 
-http.createServer(onRequest).listen(3000);
+app.use(function (req, res, next) {
+    // Website you wish to allow to connect
+    res.setHeader('Access-Control-Allow-Origin', 'http://localhost');
+    next();
+});
 
-function onRequest(client_req, client_res) {
-  console.log('serve: ' + client_req.url);
+server.listen(3000);
+
+app.get('/', function (client_req, client_res) {
+
+  console.log(client_req.query.a);
 
   var options = {
-    hostname: 'www.google.com',
+    hostname: client_req.query.a,
     port: 80,
     path: client_req.url,
     method: 'GET'
@@ -21,4 +31,8 @@ function onRequest(client_req, client_res) {
   client_req.pipe(proxy, {
     end: true
   });
-}
+})
+
+
+
+

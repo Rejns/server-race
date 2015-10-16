@@ -1,13 +1,10 @@
 #time {
-	position:absolute;
-	width:100px;
 	background-color: red;
+	transition: width 0.5s linear;
 
 }
 
 #time2 {
-	position:absolute;
-	top:30px;
-	width:100px;
 	background-color: blue;
+	transition: width 0.5s linear;
 }
