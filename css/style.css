@@ -1,0 +1,13 @@
+#time {
+	position:absolute;
+	width:100px;
+	background-color: red;
+
+}
+
+#time2 {
+	position:absolute;
+	top:30px;
+	width:100px;
+	background-color: blue;
+}
