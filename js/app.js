@@ -2,12 +2,10 @@ var app = angular.module("widget",[]);
 
 
 app.controller("widgetController", ["$scope", "racerFactory","$http", function($scope, racerFactory, $http) {	
-	$scope.racers = [];
 	$scope.racerAddr = "www.google.com";
 	$scope.startRace = start;
 	$scope.add = add;
 	$scope.race = { numRacers : 0, racers: []}
- 
 	var racerId = 0;
 
 	function add() {
@@ -16,6 +14,7 @@ app.controller("widgetController", ["$scope", "racerFactory","$http", function($
 			var racer = racerFactory("http://192.168.1.2:3000/?addr="+response.data.query);
 			racer.address = $scope.racerAddr;
 			racer.id = racerId;
+			racer.ip = response.data.query;
 			$scope.race.racers.push(racer);
 			$scope.race.numRacers = $scope.race.racers.length;
 			racerId++;
@@ -24,6 +23,8 @@ app.controller("widgetController", ["$scope", "racerFactory","$http", function($
 
 	function start() {
 		for(var i = 0; i < $scope.race.racers.length; i++) {
+			$scope.race.racers[i].currentRequests = 0;
+			$scope.race.racers[i].totalTime = 0;
 			$scope.race.racers[i].startRacing(100);
 		}
 	}
