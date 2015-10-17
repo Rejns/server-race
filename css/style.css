@@ -1,10 +1,21 @@
-#time {
-	background-color: red;
-	transition: width 0.5s linear;
-
+.wrapper {
+	width:200px;
+	border:1px solid black;
+	position:relative;
+	height:30px;
 }
 
-#time2 {
-	background-color: blue;
+.fill {
+	position:absolute;
+	left:0;
+	background-color: green;
 	transition: width 0.5s linear;
+	height:30px;
+}
+
+.percent {
+	position: absolute;
+    left:50%;
+    top:50%;
+    transform: translate(-50%, -50%);
 }

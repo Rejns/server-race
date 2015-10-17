@@ -4,9 +4,10 @@ var app = angular.module("widget",[]);
 app.controller("widgetController", ["$scope", "racerFactory","$http", function($scope, racerFactory, $http) {	
 	$scope.racers = [];
 	$scope.racerAddr = "www.google.com";
-	$scope.start = start;
+	$scope.startRace = start;
 	$scope.add = add;
-	$scope.numRacers = $scope.racers.length; 
+	$scope.race = { numRacers : 0, racers: []}
+ 
 	var racerId = 0;
 
 	function add() {
@@ -15,14 +16,15 @@ app.controller("widgetController", ["$scope", "racerFactory","$http", function($
 			var racer = racerFactory("http://192.168.1.2:3000/?addr="+response.data.query);
 			racer.address = $scope.racerAddr;
 			racer.id = racerId;
-			$scope.racers.push(racer);
-			$scope.numRacers = $scope.racers.length;
+			$scope.race.racers.push(racer);
+			$scope.race.numRacers = $scope.race.racers.length;
 			racerId++;
 		});	
 	}
+
 	function start() {
-		for(var i = 0; i < $scope.racers.length; i++) {
-			$scope.racers[i].startRacing(100);
+		for(var i = 0; i < $scope.race.racers.length; i++) {
+			$scope.race.racers[i].startRacing(100);
 		}
 	}
 }]);
@@ -51,7 +53,18 @@ app.factory("racerFactory", ["responseTime", function(responseTime){
 				if(racer.currentRequests < totalRequests) {
 					racer.currentRequests += 1;
 					racer.totalTime = racer.totalTime + response;
-					document.getElementById(racer.id).style.width = 2*racer.currentRequests+"px";
+					var els = document.getElementById(racer.id).childNodes;
+					for(var i = 0; i < els.length; i++) {
+						if(els[i].className === "wrapper") {
+							els = els[i].childNodes;
+							for(var j = 0; j < els.length; j++) {
+								if(els[j].className === "fill") {
+									els[j].style.width = 2*racer.currentRequests+"px";
+
+								}
+							}	
+						}
+					}
 					loop.apply(racer, [totalRequests]);
 				}
 			});
@@ -63,4 +76,17 @@ app.factory("racerFactory", ["responseTime", function(responseTime){
 			startRacing: loop
 		};
 	};
-}])
+}]);
+
+app.directive("remove", function(){
+	return {	
+		link: function(scope, el, attrs) {
+			scope.remove = function() {
+				var index = scope.race.racers.indexOf(scope.racer);
+				scope.race.racers.splice(index, 1);
+				scope.race.numRacers -= 1;
+				el.parent()[0].innerHTML = "";
+			}
+		}
+	}
+})
