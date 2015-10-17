@@ -51,8 +51,7 @@ app.factory("racerFactory", ["responseTime", function(responseTime){
 				if(racer.currentRequests < totalRequests) {
 					racer.currentRequests += 1;
 					racer.totalTime = racer.totalTime + response;
-					document.getElementById(racer.id).style.backgroundColor = "red";
-					document.getElementById(racer.id).style.width = racer.totalTime/100+"px";
+					document.getElementById(racer.id).style.width = 2*racer.currentRequests+"px";
 					loop.apply(racer, [totalRequests]);
 				}
 			});
