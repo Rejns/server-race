@@ -7,14 +7,17 @@ app.controller("widgetController", ["$scope", "racerFactory","$http", function($
 	$scope.start = start;
 	$scope.add = add;
 	$scope.numRacers = $scope.racers.length; 
+	var racerId = 0;
 
 	function add() {
 		var promise = $http.get("http://ip-api.com/json/"+$scope.racerAddr);
 		promise.then(function(response){
 			var racer = racerFactory("http://192.168.1.2:3000/?addr="+response.data.query);
 			racer.address = $scope.racerAddr;
+			racer.id = racerId;
 			$scope.racers.push(racer);
 			$scope.numRacers = $scope.racers.length;
+			racerId++;
 		});	
 	}
 	function start() {
@@ -48,7 +51,8 @@ app.factory("racerFactory", ["responseTime", function(responseTime){
 				if(racer.currentRequests < totalRequests) {
 					racer.currentRequests += 1;
 					racer.totalTime = racer.totalTime + response;
-					//document.getElementById("time").style.width = racer.totalTime/100+"px";
+					document.getElementById(racer.id).style.backgroundColor = "red";
+					document.getElementById(racer.id).style.width = racer.totalTime/100+"px";
 					loop.apply(racer, [totalRequests]);
 				}
 			});
