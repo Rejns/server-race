@@ -11,13 +11,24 @@ app.controller("widgetController", ["$scope", "racerFactory","$http", function($
 	function add() {
 		var promise = $http.get("http://ip-api.com/json/"+$scope.racerAddr);
 		promise.then(function(response){
-			var racer = racerFactory("http://192.168.1.2:3000/?addr="+response.data.query);
+			var racer = null;
+			if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
+				racer = racerFactory("http://89.143.151.155:3000/?addr="+response.data.query);
+			}
+			else
+				racer = racerFactory("http://192.168.1.4:3000/?addr="+response.data.query);
 			racer.address = $scope.racerAddr;
 			racer.id = racerId;
 			racer.ip = response.data.query;
-			$scope.race.racers.push(racer);
-			$scope.race.numRacers = $scope.race.racers.length;
-			racerId++;
+
+			if(response.data.query !== $scope.racerAddr)
+			{
+				$scope.race.racers.push(racer);
+				$scope.race.numRacers = $scope.race.racers.length;
+				racerId++;
+			}
+			else
+				alert("no matching ip for this domain");
 		});	
 	}
 
