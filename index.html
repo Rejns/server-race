@@ -8,6 +8,7 @@
 <div ng-app="widget" class="ng-cloak" ng-controller="widgetController">
 	<input ng-model="racerAddr"/>
 	<button id="start" ng-click="startRace()">start</button>
+	<button id="start" ng-click="stopRace()">stop</button>
 	<button id="add" ng-click="add()">add</button>
 	<div > Number of racers: <span ng-bind="race.numRacers"></span></div>
 	<div ng-repeat="racer in race.racers" id="{{ racer.id }}">
