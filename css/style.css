@@ -8,8 +8,9 @@
 .fill {
 	position:absolute;
 	left:0;
+	width:0px;
 	background-color: green;
-	transition: width 0.5s linear;
+	/*transition: width 0.5s linear;*/
 	height:30px;
 }
 
