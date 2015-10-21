@@ -13,23 +13,21 @@ app.controller("widgetController", ["$scope", "racerFactory","$http","$rootScope
 
 	function add() {
 		
-		/*var promise = $http.get("http://ip-api.com/json/"+$scope.racerAddr);
+		var promise = $http.get("http://ip-api.com/json/"+$scope.racerAddr);
 		promise.then(function(response){
 			var racer = null;
 			if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
 				racer = racerFactory("http://89.143.151.155:3000/?addr="+response.data.query);
 			}
 			else
-				racer = racerFactory("http://192.168.1.2:3000/?addr="+response.data.query); */
+				racer = racerFactory("http://192.168.1.2:3000/?addr="+response.data.query);
 			
-			racer = racerFactory("http://192.168.1.2:3000/?addr="+ "89.143.249.230");
 			racer.address = $scope.racerAddr;
 			racer.id = racerId;
-			//response.data.query = "89.143.249.230";
-			racer.ip = "89.143.249.230";
+			racer.ip = response.data.query;
 			racer.setupEventListener();
 
-			if(/*response.data.query !== $scope.racerAddr &&  */addedIPs.indexOf(racer.ip) === -1){
+			if(response.data.query !== $scope.racerAddr &&  addedIPs.indexOf(racer.ip) === -1){
 				addedIPs.push(racer.ip);
 				$scope.race.racers.push(racer);
 				$scope.race.numRacers = $scope.race.racers.length;
@@ -38,45 +36,46 @@ app.controller("widgetController", ["$scope", "racerFactory","$http","$rootScope
 			}
 			else
 				alert("no matching ip for this domain or ip is already active");
-		//});	
+		});	
 	}
-	var req = 0;
 
-	function stopRace() {
-		$rootScope.$broadcast("stop");
-		req = 0;
-	}
+	var stoppedCounter = -1;
+	var firstClick = true;
+	var completedCounter = 0;
 
 	$rootScope.$on("processed", function(event, data){
-		console.log("on processed"+data);
-		req++;
-		if(req < 100)
-			$rootScope.$broadcast("start");
-		if(req === 100)
-			$rootScope.$emit("finish");
-	});
+		if(data.completed < 100) {	
+			$rootScope.$broadcast("start", data.id);
+		}
+		else {
+			completedCounter++;
+			if(completedCounter === $scope.race.racers.length) {
+				firstClick = true;
+				stoppedCounter = -1;
+				completedCounter = 0;
+			}
+		}
+	});	
 
-	$rootScope.$on("stopped", function(){
-		console.log("on stopped")
-		req = 0;
-		$scope.race.racers[0].currentRequests = 0;
-		$scope.race.racers[0].totalTime = 0;
-		$rootScope.$broadcast("start");
-
-	});
-
-	var firstClick = true;
-
-	$rootScope.$on("finish", function(){
-		firstClick = true;
+	$rootScope.$on("stopped", function(event, racerId){
+		stoppedCounter++;
+		console.log(stoppedCounter+" "+completedCounter);
+		if(stoppedCounter + completedCounter === $scope.race.racers.length || stoppedCounter === 0) {
+			for(var i = 0; i < $scope.race.racers.length; i++) {
+				$scope.race.racers[i].completed = 0;
+			}
+			$rootScope.$broadcast("start", "all");
+			stoppedCounter = 0;
+		}
 	});
 	
-
 	function start() {
 		if(firstClick === true)
 			$rootScope.$emit("stopped");
-		else
-			stopRace();	
+		else {
+			$rootScope.$broadcast("stop");	
+			console.log("broadcast stop");
+		}
 		firstClick = false;		
 	}
 }]);
@@ -114,11 +113,11 @@ app.factory("racerFactory", ["responseTime","$rootScope", function(responseTime,
 							}	
 						}
 					}
-					$rootScope.$emit("processed", [racer.id]);
+					$rootScope.$emit("processed", { id : racer.id, completed: racer.currentRequests } );
 					console.log("emit processed");
 				}
 				else {
-					$rootScope.$emit("stopped");
+					$rootScope.$emit("stopped", [racer.id]);
 					console.log("emit stopped");
 				}
 			});
@@ -131,10 +130,17 @@ app.factory("racerFactory", ["responseTime","$rootScope", function(responseTime,
 			address: address,
 			setupEventListener: function() {	
 				var racer = this
-				$rootScope.$on("start", function(){
-					console.log("on start");
-					racer.goNextReq = true;
-					processOneRequest(racer);
+				$rootScope.$on("start", function(event, message){
+					if(message === "all") {
+						racer.currentRequests = 0;
+						racer.totalTime = 0;
+						racer.goNextReq = true;
+						processOneRequest(racer);
+					}
+					else if (message === racer.id) {
+						racer.goNextReq = true;
+						processOneRequest(racer);
+					}
 				});
 
 				$rootScope.$on("stop", function(){

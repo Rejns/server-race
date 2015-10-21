@@ -8,7 +8,6 @@
 <div ng-app="widget" class="ng-cloak" ng-controller="widgetController">
 	<input ng-model="racerAddr"/>
 	<button id="start" ng-click="startRace()">start</button>
-	<button id="start" ng-click="stopRace()">stop</button>
 	<button id="add" ng-click="add()">add</button>
 	<div > Number of racers: <span ng-bind="race.numRacers"></span></div>
 	<div ng-repeat="racer in race.racers" id="{{ racer.id }}">
@@ -22,6 +21,13 @@
 		<div ng-bind="racer.totalTime+' ms'"></div>
 		<button remove ng-click="remove()">remove</button>
 	</div>
+	Name:	google.com
+Address: 193.189.184.247
+Name:	google.com
+Address: 193.189.184.236
+Name:	google.com
+Address: 193.189.184.216
+
 </div>
 <script src="js/angular.js"></script>
 <script src="js/app.js"></script> 
