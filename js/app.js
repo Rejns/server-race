@@ -7,9 +7,18 @@ app.controller("widgetController", ["$scope", "racerFactory","$http","$rootScope
 	$scope.startRace = start;
 	$scope.add = add;
 	$scope.stop = stop;
+	$scope.remove = remove;
 	$scope.race = { numRacers : 0, racers: [] }
 	var racerId = 0;
-	var addedIPs = [];
+
+	function ipInRace(ip) {
+		for(var i = 0; i < $scope.race.racers.length; i++) {
+			if($scope.race.racers[i].ip === ip)
+				return true;
+				break;
+		}
+		return false;
+	}
 
 	function add() {
 		
@@ -27,8 +36,7 @@ app.controller("widgetController", ["$scope", "racerFactory","$http","$rootScope
 			racer.ip = response.data.query;
 			racer.setupEventListener();
 
-			if(response.data.query !== $scope.racerAddr &&  addedIPs.indexOf(racer.ip) === -1){
-				addedIPs.push(racer.ip);
+			if(response.data.query !== $scope.racerAddr && !ipInRace(racer.ip)){
 				$scope.race.racers.push(racer);
 				$scope.race.numRacers = $scope.race.racers.length;
 				racerId++;
@@ -41,42 +49,53 @@ app.controller("widgetController", ["$scope", "racerFactory","$http","$rootScope
 
 	var stoppedCounter = -1;
 	var firstClick = true;
-	var completedCounter = 0;
 
 	$rootScope.$on("processed", function(event, data){
-		if(data.completed < 100) {	
-			$rootScope.$broadcast("start", data.id);
-		}
-		else {
-			completedCounter++;
-			if(completedCounter === $scope.race.racers.length) {
-				firstClick = true;
-				stoppedCounter = -1;
-				completedCounter = 0;
-			}
-		}
-	});	
+		if(data.completed < 100) 
+			$rootScope.$broadcast("start", data.id);	
+		else 
+			$rootScope.$emit("stopped");
+		
+	});
 
 	$rootScope.$on("stopped", function(event, racerId){
 		stoppedCounter++;
-		console.log(stoppedCounter+" "+completedCounter);
-		if(stoppedCounter + completedCounter === $scope.race.racers.length || stoppedCounter === 0) {
-			for(var i = 0; i < $scope.race.racers.length; i++) {
-				$scope.race.racers[i].completed = 0;
-			}
+		console.log(stoppedCounter);
+		if(stoppedCounter === $scope.race.racers.length && allFinished()) {
+			firstClick = true;
+			stoppedCounter = -1;
+		}
+		else if(stoppedCounter === $scope.race.racers.length || stoppedCounter == 0) {
 			$rootScope.$broadcast("start", "all");
 			stoppedCounter = 0;
 		}
 	});
-	
+
 	function start() {
-		if(firstClick === true)
+		if(firstClick === true) {
+			firstClick = false;
 			$rootScope.$emit("stopped");
+		}
 		else {
 			$rootScope.$broadcast("stop");	
 			console.log("broadcast stop");
 		}
-		firstClick = false;		
+
+	}
+
+	function allFinished() {
+		for(var i = 0; i < $scope.race.racers.length; i++) {
+			if($scope.race.racers[i].currentRequests < 100) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	function remove(racer) {
+		var index = $scope.race.racers.indexOf(racer);
+		$scope.race.racers.splice(index, 1);
+		$scope.race.numRacers -= 1;
 	}
 }]);
 
@@ -114,7 +133,7 @@ app.factory("racerFactory", ["responseTime","$rootScope", function(responseTime,
 						}
 					}
 					$rootScope.$emit("processed", { id : racer.id, completed: racer.currentRequests } );
-					console.log("emit processed");
+					console.log(racer.id+" emit processed");
 				}
 				else {
 					$rootScope.$emit("stopped", [racer.id]);
@@ -130,7 +149,7 @@ app.factory("racerFactory", ["responseTime","$rootScope", function(responseTime,
 			address: address,
 			setupEventListener: function() {	
 				var racer = this
-				$rootScope.$on("start", function(event, message){
+				var unbindStart = $rootScope.$on("start", function(event, message){
 					if(message === "all") {
 						racer.currentRequests = 0;
 						racer.totalTime = 0;
@@ -145,21 +164,9 @@ app.factory("racerFactory", ["responseTime","$rootScope", function(responseTime,
 
 				$rootScope.$on("stop", function(){
 					racer.goNextReq = false;
-				});		
+				});	
 			}
 		};
 	};
 }]);
 
-app.directive("remove", function(){
-	return {	
-		link: function(scope, el, attrs) {
-			scope.remove = function() {
-				var index = scope.race.racers.indexOf(scope.racer);
-				scope.race.racers.splice(index, 1);
-				scope.race.numRacers -= 1;
-				el.parent()[0].innerHTML = "";
-			}
-		}
-	}
-})
