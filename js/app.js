@@ -6,16 +6,17 @@ app.controller("widgetController", ["$scope", "racerFactory","$http","$rootScope
 	$scope.racerAddr = "www.siol.net";
 	$scope.startRace = start;
 	$scope.add = add;
-	$scope.stop = stop;
+	$scope.stopRace = stop;
 	$scope.remove = remove;
 	$scope.race = { numRacers : 0, racers: [] }
 	var racerId = 0;
 
 	function ipInRace(ip) {
 		for(var i = 0; i < $scope.race.racers.length; i++) {
-			if($scope.race.racers[i].ip === ip)
+			if($scope.race.racers[i].ip === ip) {
 				return true;
 				break;
+			}
 		}
 		return false;
 	}
@@ -36,7 +37,8 @@ app.controller("widgetController", ["$scope", "racerFactory","$http","$rootScope
 			racer.ip = response.data.query;
 			racer.setupEventListener();
 
-			if(response.data.query !== $scope.racerAddr && !ipInRace(racer.ip)){
+			console.log(!ipInRace(racer.ip));
+			if(!ipInRace(racer.ip)){
 				$scope.race.racers.push(racer);
 				$scope.race.numRacers = $scope.race.racers.length;
 				racerId++;
@@ -44,52 +46,41 @@ app.controller("widgetController", ["$scope", "racerFactory","$http","$rootScope
 			}
 			else
 				alert("no matching ip for this domain or ip is already active");
+			$rootScope.$emit("stopped");
 		});	
 	}
 
-	var stoppedCounter = -1;
-	var firstClick = true;
+	var stoppedCounter = 0;
 
-	$rootScope.$on("processed", function(event, data){
-		if(data.completed < 100) 
-			$rootScope.$broadcast("start", data.id);	
+	$rootScope.$on("processed", function(event, racer){
+		if(racer.currentRequests < 100) 
+			$rootScope.$broadcast("start", racer.id);	
 		else 
 			$rootScope.$emit("stopped");
-		
 	});
+
+	var allReady = false;
 
 	$rootScope.$on("stopped", function(event, racerId){
 		stoppedCounter++;
-		console.log(stoppedCounter);
-		if(stoppedCounter === $scope.race.racers.length && allFinished()) {
-			firstClick = true;
-			stoppedCounter = -1;
-		}
-		else if(stoppedCounter === $scope.race.racers.length || stoppedCounter == 0) {
-			$rootScope.$broadcast("start", "all");
-			stoppedCounter = 0;
+		if(stoppedCounter === $scope.race.racers.length) {
+			allReady = true;
+			document.getElementById("status").innerHTML = "all ready!";
 		}
 	});
 
 	function start() {
-		if(firstClick === true) {
-			firstClick = false;
-			$rootScope.$emit("stopped");
+		if(allReady) {
+			document.getElementById("status").innerHTML = "";
+			stoppedCounter = 0;	
+			allReady = false;
+			$rootScope.$broadcast("start", "all");
 		}
-		else {
-			$rootScope.$broadcast("stop");	
-			console.log("broadcast stop");
-		}
-
+			
 	}
 
-	function allFinished() {
-		for(var i = 0; i < $scope.race.racers.length; i++) {
-			if($scope.race.racers[i].currentRequests < 100) {
-				return false;
-			}
-		}
-		return true;
+	function stop() {
+		$rootScope.$broadcast("stop");
 	}
 	
 	function remove(racer) {
@@ -122,22 +113,22 @@ app.factory("racerFactory", ["responseTime","$rootScope", function(responseTime,
 				if(racer.goNextReq) {
 					racer.currentRequests += 1;
 					racer.totalTime = racer.totalTime + response;
-					var els = document.getElementById(racer.id).childNodes;
-					for(var i = 0; i < els.length; i++) {
-						if(els[i].className === "wrapper") {
-							els = els[i].childNodes;
-							for(var j = 0; j < els.length; j++) {
-								if(els[j].className === "fill") 
-									els[j].style.width = 2*racer.currentRequests+"px";
-							}	
+					if(document.getElementById(racer.id) != null) {
+						var els = document.getElementById(racer.id).childNodes;
+						for(var i = 0; i < els.length; i++) {
+							if(els[i].className === "wrapper") {
+								els = els[i].childNodes;
+								for(var j = 0; j < els.length; j++) {
+									if(els[j].className === "fill") 
+										els[j].style.width = 2*racer.currentRequests+"px";
+								}	
+							}
 						}
+						$rootScope.$emit("processed", racer);
 					}
-					$rootScope.$emit("processed", { id : racer.id, completed: racer.currentRequests } );
-					console.log(racer.id+" emit processed");
 				}
 				else {
-					$rootScope.$emit("stopped", [racer.id]);
-					console.log("emit stopped");
+					$rootScope.$emit("stopped", racer.id);
 				}
 			});
 		}
