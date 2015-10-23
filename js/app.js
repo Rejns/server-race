@@ -30,7 +30,7 @@ app.controller("widgetController", ["$scope", "racerFactory","$http","$rootScope
 				racer = racerFactory("http://89.143.151.155:3000/?addr="+response.data.query);
 			}
 			else
-				racer = racerFactory("http://192.168.1.2:3000/?addr="+response.data.query);
+				racer = racerFactory("http://192.168.1.4:3000/?addr="+response.data.query);
 			
 			racer.address = $scope.racerAddr;
 			racer.id = racerId;
@@ -53,8 +53,10 @@ app.controller("widgetController", ["$scope", "racerFactory","$http","$rootScope
 		if(racer.currentRequests < 100) 
 			$rootScope.$broadcast("start", racer.id);	
 		else {
-			$scope.race.racers[racer.id].ready = true;
-			$rootScope.$emit("stopped");
+			if(racerId !== undefined) {
+				$scope.race.racers[racer.id].ready = true;
+				$rootScope.$emit("stopped");
+			}
 		}
 	});
 
@@ -91,6 +93,8 @@ app.controller("widgetController", ["$scope", "racerFactory","$http","$rootScope
 		var index = $scope.race.racers.indexOf(racer);
 		$scope.race.racers.splice(index, 1);
 		$scope.race.numRacers -= 1;
+		if(allReady())
+			$rootScope.$emit("stopped");
 	}
 }]);
 
