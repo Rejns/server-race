@@ -11,6 +11,24 @@ app.controller("widgetController", ["$scope", "racerFactory","$http","$rootScope
 	$scope.race = { numRacers : 0, racers: [] }
 	var racerId = 0;
 
+	$rootScope.$on("processed", function(event, racer){
+		if(racer.currentRequests < 100) 
+			$rootScope.$broadcast("start", racer.id);	
+		else {
+			if(racerId !== undefined) {
+				$scope.race.racers[racer.id].ready = true;
+				$rootScope.$emit("stopped");
+			}
+		}
+	});
+
+	$rootScope.$on("stopped", function(event, racerId) {
+		if(racerId !== undefined)
+			$scope.race.racers[racerId].ready = true; 
+		if(allReady()) 
+			document.getElementById("status").innerHTML = "all ready!";
+	});
+
 	function ipInRace(ip) {
 		for(var i = 0; i < $scope.race.racers.length; i++) {
 			if($scope.race.racers[i].ip === ip) {
@@ -48,24 +66,6 @@ app.controller("widgetController", ["$scope", "racerFactory","$http","$rootScope
 			$rootScope.$emit("stopped");
 		});	
 	}
-
-	$rootScope.$on("processed", function(event, racer){
-		if(racer.currentRequests < 100) 
-			$rootScope.$broadcast("start", racer.id);	
-		else {
-			if(racerId !== undefined) {
-				$scope.race.racers[racer.id].ready = true;
-				$rootScope.$emit("stopped");
-			}
-		}
-	});
-
-	$rootScope.$on("stopped", function(event, racerId) {
-		if(racerId !== undefined)
-			$scope.race.racers[racerId].ready = true; 
-		if(allReady()) 
-			document.getElementById("status").innerHTML = "all ready!";
-	});
 
 	function start() {
 		if(allReady()) {
