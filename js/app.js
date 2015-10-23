@@ -37,7 +37,6 @@ app.controller("widgetController", ["$scope", "racerFactory","$http","$rootScope
 			racer.ip = response.data.query;
 			racer.setupEventListener();
 
-			console.log(!ipInRace(racer.ip));
 			if(!ipInRace(racer.ip)){
 				$scope.race.racers.push(racer);
 				$scope.race.numRacers = $scope.race.racers.length;
@@ -50,30 +49,25 @@ app.controller("widgetController", ["$scope", "racerFactory","$http","$rootScope
 		});	
 	}
 
-	var stoppedCounter = 0;
-
 	$rootScope.$on("processed", function(event, racer){
 		if(racer.currentRequests < 100) 
 			$rootScope.$broadcast("start", racer.id);	
-		else 
+		else {
+			$scope.race.racers[racer.id].ready = true;
 			$rootScope.$emit("stopped");
-	});
-
-	var allReady = false;
-
-	$rootScope.$on("stopped", function(event, racerId){
-		stoppedCounter++;
-		if(stoppedCounter === $scope.race.racers.length) {
-			allReady = true;
-			document.getElementById("status").innerHTML = "all ready!";
 		}
 	});
 
+	$rootScope.$on("stopped", function(event, racerId) {
+		if(racerId !== undefined)
+			$scope.race.racers[racerId].ready = true; 
+		if(allReady()) 
+			document.getElementById("status").innerHTML = "all ready!";
+	});
+
 	function start() {
-		if(allReady) {
+		if(allReady()) {
 			document.getElementById("status").innerHTML = "";
-			stoppedCounter = 0;	
-			allReady = false;
 			$rootScope.$broadcast("start", "all");
 		}
 			
@@ -81,6 +75,16 @@ app.controller("widgetController", ["$scope", "racerFactory","$http","$rootScope
 
 	function stop() {
 		$rootScope.$broadcast("stop");
+	}
+
+	function allReady() {
+		for(var i = 0; i < $scope.race.racers.length; i++) {
+			if(!$scope.race.racers[i].ready) {
+				return false;
+				break;
+			}
+		}
+		return true;
 	}
 	
 	function remove(racer) {
@@ -134,21 +138,24 @@ app.factory("racerFactory", ["responseTime","$rootScope", function(responseTime,
 		}
 
 		return {
+			ready : true,
 			goNextReq : true,
 			totalTime : 0,
 			currentRequests: 0,
 			address: address,
 			setupEventListener: function() {	
 				var racer = this
-				var unbindStart = $rootScope.$on("start", function(event, message){
+				$rootScope.$on("start", function(event, message){
 					if(message === "all") {
 						racer.currentRequests = 0;
 						racer.totalTime = 0;
 						racer.goNextReq = true;
+						racer.ready = false;
 						processOneRequest(racer);
 					}
 					else if (message === racer.id) {
 						racer.goNextReq = true;
+						racer.ready = false;
 						processOneRequest(racer);
 					}
 				});
