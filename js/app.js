@@ -44,11 +44,9 @@ app.controller("widgetController", ["$scope", "racerFactory","$http","$rootScope
 		var promise = $http.get("http://ip-api.com/json/"+$scope.racerAddr);
 		promise.then(function(response){
 			var racer = null;
-			if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
-				racer = racerFactory("http://89.143.151.155:3000/?addr="+response.data.query);
-			}
-			else
-				racer = racerFactory("http://192.168.1.4:3000/?addr="+response.data.query);
+		
+			var host = window.location.host;
+			racer = racerFactory("http://"+host+"/proxy/?addr="+response.data.query);
 			
 			racer.address = $scope.racerAddr;
 			racer.id = racerId;
