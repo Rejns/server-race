@@ -9,13 +9,21 @@ app.use(function (req, res, next) {
     next();
 });
 
-server.listen(3000);
 
-app.get('/', function (client_req, client_res) {
+console.log(__dirname);
+app.use(express.static(__dirname+'/../'));
+
+app.get('/', function(req, res) {
+	res.sendFile(__dirname+'/../index.html');
+});
+
+app.get('/proxy', function (client_req, client_res) {
   http.get("http://"+client_req.query.addr, function(res) {
     res.pipe(client_res);
   });
 });
+
+server.listen(3000);
 
 
 
