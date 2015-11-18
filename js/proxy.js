@@ -16,11 +16,33 @@ app.get('/', function(req, res) {
 });
 
 app.get('/proxy', function (client_req, client_res) {
-  http.get("http://"+client_req.query.addr, function(res) {
+  var req = http.get("http://"+client_req.query.addr, function(res) {
     res.pipe(client_res);
-  }, function(err) {
-  	console.log(err);
   });
+
+req.on('error', function (e) {
+  // General error, i.e.
+  //  - ECONNRESET - server closed the socket unexpectedly
+  //  - ECONNREFUSED - server did not listen
+  //  - HPE_INVALID_VERSION
+  //  - HPE_INVALID_STATUS
+  //  - ... (other HPE_* codes) - server returned garbage
+  console.log(e);
+  client_res.sendStatus(500);
+});
+
+req.on('timeout', function () {
+  // Timeout happend. Server received request, but not handled it
+  // (i.e. doesn't send any response or it took to long).
+  // You don't know what happend.
+  // It will emit 'error' message as well (with ECONNRESET code).
+
+  console.log('timeout');
+  req.abort();
+});
+
+req.setTimeout(20000);
+req.end();
 });
 
 server.listen(3000);
