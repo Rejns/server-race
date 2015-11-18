@@ -10,12 +10,13 @@ app.controller("widgetController", ["$scope", "racerFactory","$http","$rootScope
 	$scope.remove = remove;
 	$scope.race = { numRacers : 0, racers: [] }
 	var racerId = 0;
+	$scope.status = "";
 
 	$rootScope.$on("processed", function(event, racer){
 		if(racer.currentRequests < 100) 
 			$rootScope.$broadcast("start", racer.id);	
 		else {
-			if(racerId !== undefined) {
+			if(racerId !== undefined && $scope.race.racers[racer.id]) {
 				$scope.race.racers[racer.id].ready = true;
 				$rootScope.$emit("stopped");
 			}
@@ -23,10 +24,14 @@ app.controller("widgetController", ["$scope", "racerFactory","$http","$rootScope
 	});
 
 	$rootScope.$on("stopped", function(event, racerId) {
-		if(racerId !== undefined)
+		if(racerId !== undefined && $scope.race.racers[racerId] !== undefined)
 			$scope.race.racers[racerId].ready = true; 
-		if(allReady()) 
-			document.getElementById("status").innerHTML = "all ready!";
+		if(allReady()) {
+			if($scope.race.racers.length === 0) 
+				$scope.status = "";
+			else
+				$scope.status = "all ready!";
+		}
 	});
 
 	function ipInRace(ip) {
@@ -39,35 +44,42 @@ app.controller("widgetController", ["$scope", "racerFactory","$http","$rootScope
 		return false;
 	}
 
-	function add() {
-		
+	function checkIfIp(string) {
+		//check if string matches reg exp for ip
+		if(/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(string))
+			return true;
+		return false
+	}
+
+	function add() {	
 		var promise = $http.get("http://ip-api.com/json/"+$scope.racerAddr);
 		promise.then(function(response){
-			var racer = null;
-		
-			var host = window.location.host;
-			racer = racerFactory("http://"+host+"/proxy/?addr="+response.data.query);
-			
-			racer.address = $scope.racerAddr;
-			racer.id = racerId;
-			racer.ip = response.data.query;
-			racer.setupEventListener();
+			if(checkIfIp(response.data.query)) {
+				var racer = racerFactory("http://localhost:3000/proxy/?addr="+response.data.query);	
+				racer.address = $scope.racerAddr;
+				racer.id = racerId;
 
-			if(!ipInRace(racer.ip)){
-				$scope.race.racers.push(racer);
-				$scope.race.numRacers = $scope.race.racers.length;
-				racerId++;
-				
+				racer.ip = response.data.query;
+				racer.setupEventListener();
+
+				if(!ipInRace(racer.ip)){
+					$scope.race.racers.push(racer);
+					$scope.race.numRacers = $scope.race.racers.length;
+					racerId++;
+					$rootScope.$emit("stopped"); 	
+				}
+				else
+					alert("ip already active");
 			}
 			else
-				alert("no matching ip for this domain or ip is already active");
-			$rootScope.$emit("stopped");
+				alert("no matching ip for this domain");
+			
 		});	
 	}
 
 	function start() {
 		if(allReady()) {
-			document.getElementById("status").innerHTML = "";
+			$scope.status = "";
 			$rootScope.$broadcast("start", "all");
 		}
 			
@@ -86,10 +98,20 @@ app.controller("widgetController", ["$scope", "racerFactory","$http","$rootScope
 		}
 		return true;
 	}
+
+	function fixRacerIndex(racers) {
+		for(var i = 0; i < racers.length; i++) {
+			racers[i].id = i;
+		}
+	}
 	
 	function remove(racer) {
 		var index = $scope.race.racers.indexOf(racer);
+		$scope.race.racers[index].active = false;
 		$scope.race.racers.splice(index, 1);
+		fixRacerIndex($scope.race.racers);
+		racerId--;
+		console.log($scope.race.racers.length);
 		$scope.race.numRacers -= 1;
 		if(allReady())
 			$rootScope.$emit("stopped");
@@ -105,41 +127,59 @@ app.factory("responseTime", ["$http","$q", function($http, $q) {
 				var then = Date.now();
 				then = then - now;
 				resolve(then);
+			}, function(error) {
+				reject(error);
 			});
 		});
 	}
 }]);
 
+app.directive("racerprogress", function() {
+	return {
+		scope : {
+			racer: '='
+		},
+		restrict: 'E',
+		replace: true,
+		template: '<div class="wrapper">\
+				  <div class="fill"></div>\
+				  <div class="percent">\
+					<span > {{ racer.currentRequests }} % </span>\
+				  </div>\
+				  </div>',
+		link: function(scope, element, attrs) {
+			scope.$watch(function() {
+				return scope.racer.currentRequests;
+			}, function(val) {
+				element.children()[0].style.width = 2*scope.racer.currentRequests+"px";
+			});
+		}
+	}
+});
+
 app.factory("racerFactory", ["responseTime","$rootScope", function(responseTime, $rootScope){
 	return function(address) {
-		function processOneRequest(racer) {	
-			var promise = responseTime(address);
-			var racer = racer;
-			promise.then(function(response) {
-				if(racer.goNextReq) {
-					racer.currentRequests += 1;
-					racer.totalTime = racer.totalTime + response;
-					if(document.getElementById(racer.id) != null) {
-						var els = document.getElementById(racer.id).childNodes;
-						for(var i = 0; i < els.length; i++) {
-							if(els[i].className === "wrapper") {
-								els = els[i].childNodes;
-								for(var j = 0; j < els.length; j++) {
-									if(els[j].className === "fill") 
-										els[j].style.width = 2*racer.currentRequests+"px";
-								}	
-							}
-						}
+		function processOneRequest(racer) {
+			if(racer.active) {	
+				var promise = responseTime(address);
+				var racer = racer;
+				promise.then(function(response) {
+					if(racer.goNextReq) {
+						racer.currentRequests += 1;
+						racer.totalTime = racer.totalTime + response;
 						$rootScope.$emit("processed", racer);
 					}
-				}
-				else {
-					$rootScope.$emit("stopped", racer.id);
-				}
-			});
+					else {
+						$rootScope.$emit("stopped", racer.id);
+					}
+				}, function(err) {
+					console.log(err);
+				});
+			}
 		}
 
 		return {
+			active: true,
 			ready : true,
 			goNextReq : true,
 			totalTime : 0,
