@@ -1,22 +1,3 @@
-.wrapper {
-	width:200px;
-	border:1px solid black;
-	position:relative;
-	height:30px;
-}
-
-.fill {
-	position:absolute;
-	left:0;
-	width:0px;
-	background-color: green;
-	/*transition: width 0.5s linear;*/
-	height:30px;
-}
-
-.percent {
-	position: absolute;
-    left:50%;
-    top:50%;
-    transform: translate(-50%, -50%);
+.controls, .race {
+	margin-top:50px;
 }

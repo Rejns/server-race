@@ -3,7 +3,7 @@ var app = angular.module("widget",[]);
 
 app.controller("widgetController", ["$scope", "racerFactory","$http","$rootScope","$q", function($scope, racerFactory, $http, $rootScope, $q) {	
 
-	var addresses = ["www.siol.net", "www.google.com", "mojedelo.com", "kulinarika.net", "slo-tech.com", "telekom.si", "www.yahoo.com", "gmail.com", "github.com"]
+	var addresses = ["www.siol.net", "www.google.com", "kulinarika.net", "slo-tech.com", "telekom.si", "www.yahoo.com", "gmail.com", "github.com"]
 	$scope.racerAddr = "www.siol.net";
 	$scope.startRace = start;
 	$scope.add = add;
@@ -123,13 +123,14 @@ app.controller("widgetController", ["$scope", "racerFactory","$http","$rootScope
 
 	function start() {
 		if(allReady()) {
-			$scope.status = "";
+			$scope.status = "racing ...";
 			$rootScope.$broadcast("start", "all");
 		}
 			
 	}
 
 	function stop() {
+		$scope.status = "stopping ..."
 		$rootScope.$broadcast("stop");
 	}
 
@@ -188,17 +189,16 @@ app.directive("racerprogress", function() {
 		},
 		restrict: 'E',
 		replace: true,
-		template: '<div class="wrapper">\
-				  <div class="fill"></div>\
-				  <div class="percent">\
-					<span > {{ racer.currentRequests }} % </span>\
-				  </div>\
-				  </div>',
+		template: '<div class="progress">\
+					  <div class="progress-bar" role="progressbar" style="width:0%">\
+					    {{ racer.currentRequests }} %\
+					  </div>\
+				   </div>',
 		link: function(scope, element, attrs) {
 			scope.$watch(function() {
 				return scope.racer.currentRequests;
 			}, function(val) {
-				element.children()[0].style.width = 2*scope.racer.currentRequests+"px";
+				element.children()[0].style.width = scope.racer.currentRequests+"%";
 			});
 		}
 	}
