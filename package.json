@@ -1,0 +1,24 @@
+{
+  "name": "server-race",
+  "version": "1.0.0",
+  "description": "asynchronous server race",
+  "main": "app.js",
+  "dependencies": {
+    "bootstrap": "^3.3.6",
+    "express": "^4.13.3"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rejns/server-race.git"
+  },
+  "author": "rejns",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Rejns/server-race/issues"
+  },
+  "homepage": "https://github.com/Rejns/server-race#readme"
+}
