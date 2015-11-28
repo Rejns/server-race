@@ -5,3 +5,11 @@
 .progress-bar {
 	transition: width 0.1s linear;
 }
+
+.remove-icon {
+	color: gray;
+}
+
+.remove-icon:hover {
+	color: red;
+}
