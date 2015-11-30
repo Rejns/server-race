@@ -1,6 +1,6 @@
 #Asynchronous server race
 This was project was built with intension to practice angularjs promises. User may input one more internet addresses
-and upon pressing start race begins by sending 100 requests to each server one by one. New request cannot be sent before prior request is completed. 
+and upon pressing start race begins by sending 100 requests to each server one by one. For each independent racer (server) new request cannot be sent before prior request is completed, though more racers may send a request at the same time.
 
 ##Installation
 
