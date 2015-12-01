@@ -16,33 +16,41 @@ app.get('/', function(req, res) {
 });
 
 app.get('/proxy', function (client_req, client_res) {
-  var req = http.get("http://"+client_req.query.addr, function(res) {
-    res.pipe(client_res);
+  var now = Date.now();
+  var options = { method: 'GET', host: client_req.query.addr, port: 80, path: '/' };
+  var req = http.request(options, function(res) {
+    var then = Date.now();
+    var time = then - now;
+    res.on('data', function() {
+      res.destroy();
+    });
+    client_res.send({ time : time });
   });
 
-req.on('error', function (e) {
-  // General error, i.e.
-  //  - ECONNRESET - server closed the socket unexpectedly
-  //  - ECONNREFUSED - server did not listen
-  //  - HPE_INVALID_VERSION
-  //  - HPE_INVALID_STATUS
-  //  - ... (other HPE_* codes) - server returned garbage
-  console.log(e);
-  client_res.sendStatus(500);
-});
+  req.on('error', function (e) {
+    // General error, i.e.
+    //  - ECONNRESET - server closed the socket unexpectedly
+    //  - ECONNREFUSED - server did not listen
+    //  - HPE_INVALID_VERSION
+    //  - HPE_INVALID_STATUS
+    //  - ... (other HPE_* codes) - server returned garbage
+    console.log(e);
+    client_res.sendStatus(500);
+  });
 
-req.on('timeout', function () {
-  // Timeout happend. Server received request, but not handled it
-  // (i.e. doesn't send any response or it took to long).
-  // You don't know what happend.
-  // It will emit 'error' message as well (with ECONNRESET code).
+  req.on('timeout', function () {
+    // Timeout happend. Server received request, but not handled it
+    // (i.e. doesn't send any response or it took to long).
+    // You don't know what happend.
+    // It will emit 'error' message as well (with ECONNRESET code).
 
-  console.log('timeout');
-  req.abort();
-});
+    console.log('timeout');
+    req.abort();
+  });
 
-req.setTimeout(20000);
-req.end();
+  //set timeout when waiting for response
+  req.setTimeout(20000); 
+  req.end();
 });
 
 server.listen(3000);

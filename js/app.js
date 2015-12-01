@@ -169,12 +169,9 @@ app.controller("widgetController", ["$scope", "racerFactory","$http","$rootScope
 app.factory("responseTime", ["$http","$q", function($http, $q) {
 	return function(address) {
 		return $q(function(resolve, reject) {
-			var now = Date.now();
 			var promise = $http.get(address);
 			promise.then(function(response) {
-				var then = Date.now();
-				then = then - now;
-				resolve(then);
+				resolve(response.data.time);
 			}, function(error) {
 				reject(error);
 			});
