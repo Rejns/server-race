@@ -174,7 +174,7 @@ app.factory("responseTime", ["$http","$q", function($http, $q) {
 			promise.then(function(response) {
 				var then = Date.now();
 				then = then - now;
-				resolve(then);
+				resolve(response.data.time);
 			}, function(error) {
 				reject(error);
 			});
