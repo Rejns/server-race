@@ -9,4 +9,4 @@ and upon pressing start race begins by sending 100 requests to each server one b
 3. `npm install`
 4. `cd js`
 5. `node proxy.js`
-4. user your browser and visit `http://localhost:3000/`
+4. user your browser and visit `http://localhost:4000/`
