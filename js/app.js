@@ -70,7 +70,7 @@ app.controller("widgetController", ["$scope", "racerFactory","$http","$rootScope
 			var promise = $http.get("http://ip-api.com/json/"+addr);
 			promise.then(function(response){
 			if(checkIfIp(response.data.query)) {
-				var racer = racerFactory("http://193.77.157.141:4000/proxy/?addr="+response.data.query);	
+				var racer = racerFactory("http://"+location.host+"/proxy/?addr="+response.data.query);	
 				racer.address = addr;
 				racer.id = racerId;
 

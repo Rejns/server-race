@@ -16,8 +16,8 @@ app.get('/', function(req, res) {
 });
 
 app.get('/proxy', function (client_req, client_res) {
-  var now = Date.now();
   var options = { method: 'GET', host: client_req.query.addr, port: 80, path: '/' };
+  var now = Date.now();
   var req = http.request(options, function(res) {
     var then = Date.now();
     var time = then - now;
